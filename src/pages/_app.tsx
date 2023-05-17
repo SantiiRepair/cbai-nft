@@ -2,19 +2,23 @@ import Head from "next/head";
 import { AppProps } from "next/app";
 import { ChakraProvider, Flex } from "@chakra-ui/react";
 import { Config, DAppProvider, Mainnet } from "@usedapp/core";
-
+import { MetaMaskInpageProvider } from "@metamask/providers";
 import Fonts from "fonts";
 import theme from "theme";
 import { WalletProvider } from "../providers/WalletProvider";
 import { Header } from "../modules/components/Header";
 
-const alchemyUrl = process.env.NEXT_PUBLIC_ALCHEMY_APP;
+declare global {
+  interface Window {
+    ethereum?: MetaMaskInpageProvider
+  }
+}
 
 function MyApp({ Component, pageProps }: AppProps) {
   const config: Config = {
-    readOnlyChainId: Mainnet.chainId,
+    readOnlyChainId: Number(process.env.MAINNET_CHAIN_ID!) || Number(process.env.SEPOLIA_CHAIN_ID!),
     readOnlyUrls: {
-      [Mainnet.chainId]: alchemyUrl || "",
+    [Mainnet.chainId]:  process.env.MAINNET_RPC! || process.env.SEPOLIA_RPC!,
     },
     autoConnect: true,
   };

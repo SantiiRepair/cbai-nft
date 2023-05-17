@@ -1,16 +1,10 @@
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
-
 import { useEffect, useState } from "react";
 import { useToast } from "@chakra-ui/react";
-import SmartContract from "../contracts/CBAI.json";
+import { cbai } from "../contracts/parsedAbi/cbai";
 import { useWallet } from "../providers/WalletProvider";
 import { Toast } from "../modules/components/Toast";
-const { ethers } = require("ethers");
-const { useEthers } = require('@usedapp/core');
+import { ethers } from "ethers";
+import { useEthers } from '@usedapp/core';
 
 // const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 const contractAddress = process.env.CONTRACT_ADDRESS;
@@ -36,16 +30,19 @@ export const useSmartContract = () => {
     process.env.NEXT_PUBLIC_CHAIN_ID === "5"
       ? "https://goerli.etherscan.io"
       : "https://etherscan.io";
-
-  const provider = new ethers.providers.Web3Provider(globalThis.window?.ethereum);
-  const signer = provider.getSigner();
-  const contract = new ethers.Contract(
-    // @ts-ignore
-    SmartContract.abi,
-    contractAddress, signer);
+  let provider: ethers.providers.Web3Provider | undefined
+  let contract: ethers.Contract
+  if (typeof globalThis.window?.ethereum != 'undefined') {
+    provider = new ethers.providers.Web3Provider(globalThis.window?.ethereum as any)
+    console.log({ provider });
+    const signer = provider.getSigner();
+    contract = new ethers.Contract(
+      cbai,
+      contractAddress, 
+      signer);
+  }
 
   async function initializeEngine() {
-    console.log({ provider });
 
     if (contract && conn && !currentSupplyValue && !totalSupplyValue) {
       const contractCurrentSupply = await contract.getCurrentSupply()
@@ -63,9 +60,9 @@ export const useSmartContract = () => {
   function initState() {
     try {
       if (active) {
-        initializeEngine().then((r) => r);
+        return;
       } else {
-        active === false && activateBrowserWallet();
+        activateBrowserWallet();
       }
     } catch (error: any) {
       console.error(error);
@@ -74,7 +71,7 @@ export const useSmartContract = () => {
 
   useEffect(() => {
     initState();
-  }, [contract]);
+  }, []);
 
   async function requestMint({
     amount,
@@ -861,7 +858,6 @@ export const useSmartContract = () => {
   return {
     requestMint,
     isLoadingTransaction,
-    contract,
     totalSupplyValue,
     currentSupplyValue,
     requestAddToWhitelist,

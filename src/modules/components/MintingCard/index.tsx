@@ -1,15 +1,14 @@
 import { Flex, Image, Text, Heading } from "@chakra-ui/react";
 import { QuantityButton } from "./QuantityButton";
 import { useState } from "react";
-// import { useWallet } from "providers/WalletProvider";
-// import { useSmartContract } from "hooks/useSmartContract";
 import { ButtonWallet } from "../ButtonWallet/ButtonWallet";
 import Link from "next/link";
-import { useWallet } from "../../../providers/WalletProvider";
 import { useSmartContract } from "../../../hooks/useSmartContract";
+import { useEthers } from '@usedapp/core';
 
 export function MintCard() {
   const [quantity, setQuantity] = useState(1);
+  const { active } = useEthers();
 
   const {
     requestMint,
@@ -49,7 +48,7 @@ export function MintCard() {
           <Flex pt={"1rem"}>
             <Text>TOTAL MINTED: </Text>
             <Text pl={"0.5rem"} color={"#2F71C0"} fontWeight={"600"}>
-              {currentSupplyValue}/{totalSupplyValue}
+              {active ? `${currentSupplyValue} / ${totalSupplyValue}` : '0 / 0'}
             </Text>
           </Flex>
         </Flex>

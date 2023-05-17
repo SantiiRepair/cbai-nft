@@ -42,7 +42,7 @@ export const useEthereum = () => {
 
   async function getContract() {
     // @ts-ignore
-    const web3 = new Web3(window.ethereum);
+    const web3 = new Web3(globalThis.window?.ethereum as any);
 
     // @ts-ignore
     const networkId = await window.ethereum.request({

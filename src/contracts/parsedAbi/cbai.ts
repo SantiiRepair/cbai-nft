@@ -1,4 +1,4 @@
-[
+export let cbai = [
     {
       "inputs": [
         {
