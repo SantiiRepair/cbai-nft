@@ -1,6 +1,11 @@
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
 import { useEffect, useState } from "react";
 import { useToast } from "@chakra-ui/react";
-import Web3 from "web3";
+import { ethers } from "ethers";
 import { useEthers } from '@usedapp/core';
 import SmartContract from "../contracts/CBAI.json";
 import { useWallet } from "../providers/WalletProvider";
@@ -10,16 +15,17 @@ import { Toast } from "../modules/components/Toast";
 const contractAddress = process.env.CONTRACT_ADDRESS;
 
 interface MintProps {
-  address: string;
   amount: number;
   isAdmin: boolean;
   isWhitelist: boolean;
 }
 
+let txhash: string
+
 export const useSmartContract = () => {
   const toast = useToast();
   const { active, activateBrowserWallet } = useEthers();
-  const { conn, wallet } = useWallet();
+  const { conn } = useWallet();
   const [currentSupplyValue, setCurrentSupplyValue] = useState(null);
   const [totalSupplyValue, setTotalSupplyValue] = useState(null);
   const [nftCost, setNftCost] = useState(0);
@@ -30,31 +36,25 @@ export const useSmartContract = () => {
       ? "https://goerli.etherscan.io"
       : "https://etherscan.io";
 
-  const web3 = new Web3(new Web3.providers.HttpProvider(process.env.SEPOLIA_RPC!));
-  const contract = new web3.eth.Contract(
+  const provider = new ethers.Wallet(globalThis.window?.ethereum);
+  const signer = provider.getSigner();
+  const contract = new ethers.Contract(
     // @ts-ignore
     SmartContract.abi,
-    contractAddress
-  );
+    contractAddress, signer);
 
   async function initializeEngine() {
-    console.log({ web3 });
+    console.log({ provider });
 
     if (contract && conn && !currentSupplyValue && !totalSupplyValue) {
-      const contractCurrentSupply = await contract.methods
-        .getCurrentSupply()
-        .call({
-          from: wallet,
-        });
+      const contractCurrentSupply = await contract.getCurrentSupply()
 
       setCurrentSupplyValue(contractCurrentSupply);
 
-      const contractTotalSupply = await contract.methods
-        .getTotalSupply()
-        .call();
+      const contractTotalSupply = await contract.getTotalSupply()
       setTotalSupplyValue(contractTotalSupply);
 
-      const contractNftCost = await contract.methods.getNFTCost().call();
+      const contractNftCost = await contract.getNFTCost();
       setNftCost(contractNftCost);
     }
   }
@@ -76,30 +76,22 @@ export const useSmartContract = () => {
   }, [contract]);
 
   async function requestMint({
-    address,
     amount,
     isAdmin,
     isWhitelist,
   }: MintProps) {
     setIsLoadingTransaction(false);
     let transactionParameters;
-    const etherCost = Web3.utils.fromWei(nftCost.toString(), "ether");
 
     if (isAdmin) {
       transactionParameters = {
-        to: contractAddress,
-        from: address,
-        // @ts-ignore
-        value: Web3.utils.toWei("0", "ether") * amount,
-        gas: Web3.utils.toHex(120000 * amount),
+        gasLimit: 200000,
+        to: contractAddress
       };
     } else {
       transactionParameters = {
-        to: contractAddress,
-        from: address,
-        // @ts-ignore
-        value: Web3.utils.toWei(etherCost, "ether") * amount,
-        gas: Web3.utils.toHex(120000 * amount),
+        gasLimit: 200000,
+        to: contractAddress
       };
     }
 
@@ -107,33 +99,24 @@ export const useSmartContract = () => {
     try {
       if (isWhitelist) {
         setIsLoadingTransaction(true);
-        txHash = await contract.methods
-          .whitelistMint(amount)
-          .send(transactionParameters)
-          .once("error", (err: any) => {
-            return err;
-          })
+        const whitelistMint = await contract.whitelistMint(amount)
+        await whitelistMint.wait()
           .then((receipt: any) => {
+            txhash = receipt.transactionHash
             return receipt.transactionHash;
           });
       } else {
+
         setIsLoadingTransaction(true);
-        txHash = await contract.methods
-          .mint(amount)
-          .send(transactionParameters)
-          .once("error", (err: any) => {
-            return err;
-          })
+        const mint = await contract.mint(amount);
+        await mint.wait()
           .then((receipt: any) => {
+            txhash = receipt.transactionHash
             return receipt.transactionHash;
           });
       }
 
-      const contractCurrentSupply = await contract.methods
-        .getCurrentSupply()
-        .call({
-          from: wallet,
-        });
+      const contractCurrentSupply = await contract.getCurrentSupply()
 
       setCurrentSupplyValue(contractCurrentSupply);
       setIsLoadingTransaction(false);
@@ -152,11 +135,11 @@ export const useSmartContract = () => {
       });
       return {
         success: true,
-        status: `✅ Check out your transaction on Etherscan: https://etherscan.io/tx/${txHash}`,
+        status: `✅ Check out your transaction on Etherscan: https://etherscan.io/tx/${txHash!}`,
       };
     } catch (error: any) {
       setIsLoadingTransaction(false);
-
+      console.error(error)
       if (error.receipt) {
         toast({
           status: "error",
@@ -185,27 +168,20 @@ export const useSmartContract = () => {
   }
 
   async function requestAddToWhitelist(
-    connectedAccount: string,
     address: string
   ) {
     setIsLoadingTransaction(true);
 
     const transactionParameters = {
-      to: contractAddress,
-      from: connectedAccount,
-      // @ts-ignore
-      value: Web3.utils.toWei("0", "ether"),
-      gas: Web3.utils.toHex(100000),
+      gasLimit: 200000,
+      to: contractAddress
     };
 
     try {
-      const txhash = await contract.methods
-        .singleAddToWhitelist(address)
-        .send(transactionParameters)
-        .once("error", (err: any) => {
-          return err;
-        })
+      const singleAddToWhitelist = await contract.singleAddToWhitelist(address)
+      await singleAddToWhitelist.wait()
         .then((receipt: any) => {
+          txhash = receipt.transactionHash
           return receipt.transactionHash;
         });
 
@@ -255,27 +231,20 @@ export const useSmartContract = () => {
   }
 
   async function requestAddToBlacklist(
-    connectedAccount: string,
     address: string
   ) {
     setIsLoadingTransaction(true);
 
     const transactionParameters = {
-      to: contractAddress,
-      from: connectedAccount,
-      // @ts-ignore
-      value: Web3.utils.toWei("0", "ether"),
-      gas: Web3.utils.toHex(100000),
+      gasLimit: 200000,
+      to: contractAddress
     };
 
     try {
-      const txhash = await contract.methods
-        .singleAddToBlacklist(address)
-        .send(transactionParameters)
-        .once("error", (err: any) => {
-          return err;
-        })
+      const singleAddToBlacklist = await contract.singleAddToBlacklist(address)
+      await singleAddToBlacklist.wait()
         .then((receipt: any) => {
+          txhash = receipt.transactionHash
           return receipt.transactionHash;
         });
 
@@ -325,27 +294,20 @@ export const useSmartContract = () => {
   }
 
   async function requestRemoveFromWhitelist(
-    connectedAccount: string,
     address: string
   ) {
     setIsLoadingTransaction(true);
 
     const transactionParameters = {
-      to: contractAddress,
-      from: connectedAccount,
-      // @ts-ignore
-      value: Web3.utils.toWei("0", "ether"),
-      gas: Web3.utils.toHex(100000),
+      gasLimit: 200000,
+      to: contractAddress
     };
 
     try {
-      const txhash = await contract.methods
-        .singleRemoveFromWhitelist(address)
-        .send(transactionParameters)
-        .once("error", (err: any) => {
-          return err;
-        })
+      const singleRemoveFromWhitelist = await contract.singleRemoveFromWhitelist(address)
+      await singleRemoveFromWhitelist.wait()
         .then((receipt: any) => {
+          txhash = receipt.transactionHash
           return receipt.transactionHash;
         });
 
@@ -395,27 +357,20 @@ export const useSmartContract = () => {
   }
 
   async function requestRemoveFromBlacklist(
-    connectedAccount: string,
     address: string
   ) {
     setIsLoadingTransaction(true);
 
     const transactionParameters = {
-      to: contractAddress,
-      from: connectedAccount,
-      // @ts-ignore
-      value: Web3.utils.toWei("0", "ether"),
-      gas: Web3.utils.toHex(100000),
+      gasLimit: 200000,
+      to: contractAddress
     };
 
     try {
-      const txhash = await contract.methods
-        .singleRemoveFromBlacklist(address)
-        .send(transactionParameters)
-        .once("error", (err: any) => {
-          return err;
-        })
+      const singleRemoveFromBlacklist = await contract.singleRemoveFromBlacklist(address)
+      await singleRemoveFromBlacklist.wait()
         .then((receipt: any) => {
+          txhash = receipt.transactionHash
           return receipt.transactionHash;
         });
 
@@ -464,25 +419,19 @@ export const useSmartContract = () => {
     }
   }
 
-  async function withdraw(address: string) {
+  async function withdraw() {
     setIsLoadingTransaction(true);
 
     const transactionParameters = {
-      to: contractAddress,
-      from: address,
-      // @ts-ignore
-      value: Web3.utils.toWei("0", "ether"),
-      gas: Web3.utils.toHex(100000),
+      gasLimit: 200000,
+      to: contractAddress
     };
 
     try {
-      const txhash = await contract.methods
-        .withdraw()
-        .send(transactionParameters)
-        .once("error", (err: any) => {
-          return err;
-        })
+      const withdraw = await contract.withdraw()
+      await withdraw.wait()
         .then((receipt: any) => {
+          txhash = receipt.transactionHash
           return receipt.transactionHash;
         });
 
@@ -532,25 +481,19 @@ export const useSmartContract = () => {
     }
   }
 
-  async function activatePublicSale(address: string, state: boolean) {
+  async function activatePublicSale(state: boolean) {
     setIsLoadingTransaction(true);
 
     const transactionParameters = {
-      to: contractAddress,
-      from: address,
-      // @ts-ignore
-      value: Web3.utils.toWei("0", "ether"),
-      gas: Web3.utils.toHex(100000),
+      gasLimit: 200000,
+      to: contractAddress
     };
 
     try {
-      const txhash = await contract.methods
-        .adminManageSaleState(state)
-        .send(transactionParameters)
-        .once("error", (err: any) => {
-          return err;
-        })
+      const adminManageSaleState = await contract.adminManageSaleState(state)
+      await adminManageSaleState.wait()
         .then((receipt: any) => {
+          txhash = receipt.transactionHash
           return receipt.transactionHash;
         });
 
@@ -600,25 +543,21 @@ export const useSmartContract = () => {
     }
   }
 
-  async function activateWhitelist(address: string, state: boolean) {
+  async function activateWhitelist(state: boolean) {
     setIsLoadingTransaction(true);
 
     const transactionParameters = {
-      to: contractAddress,
-      from: address,
-      // @ts-ignore
-      value: Web3.utils.toWei("0", "ether"),
-      gas: Web3.utils.toHex(100000),
+      gasLimit: 200000,
+      to: contractAddress
     };
 
+
     try {
-      const txhash = await contract.methods
-        .adminManageWhitelistState(state)
-        .send(transactionParameters)
-        .once("error", (err: any) => {
-          return err;
-        })
+      const adminManageWhitelistState = await contract.adminManageWhitelistState(state)
+      await adminManageWhitelistState.wait()
         .then((receipt: any) => {
+          txhash = receipt.transactionHash
+          txhash = receipt.transactionHash
           return receipt.transactionHash;
         });
 
@@ -668,25 +607,19 @@ export const useSmartContract = () => {
     }
   }
 
-  async function changeOwnership(address: string, ownerAddress: string) {
+  async function changeOwnership(ownerAddress: string) {
     setIsLoadingTransaction(true);
 
     const transactionParameters = {
-      to: contractAddress,
-      from: address,
-      // @ts-ignore
-      value: Web3.utils.toWei("0", "ether"),
-      gas: Web3.utils.toHex(100000),
+      gasLimit: 200000,
+      to: contractAddress
     };
 
     try {
-      const txhash = await contract.methods
-        .transferOwnership(ownerAddress)
-        .send(transactionParameters)
-        .once("error", (err: any) => {
-          return err;
-        })
+      const transferOwnership = await contract.transferOwnership(ownerAddress)
+      await transferOwnership.wait()
         .then((receipt: any) => {
+          txhash = receipt.transactionHash
           return receipt.transactionHash;
         });
 
@@ -735,25 +668,19 @@ export const useSmartContract = () => {
     }
   }
 
-  async function setBaseUri(address: string, baseUri: string) {
+  async function setBaseUri(baseUri: string) {
     setIsLoadingTransaction(true);
 
     const transactionParameters = {
-      to: contractAddress,
-      from: address,
-      // @ts-ignore
-      value: Web3.utils.toWei("0", "ether"),
-      gas: Web3.utils.toHex(100000),
+      gasLimit: 200000,
+      to: contractAddress
     };
 
     try {
-      const txhash = await contract.methods
-        .setBaseURI(baseUri)
-        .send(transactionParameters)
-        .once("error", (err: any) => {
-          return err;
-        })
+      const setBaseURI = await contract.setBaseURI(baseUri)
+      await setBaseURI.wait()
         .then((receipt: any) => {
+          txhash = receipt.transactionHash
           return receipt.transactionHash;
         });
 
@@ -802,29 +729,23 @@ export const useSmartContract = () => {
     }
   }
 
-  async function manageNFTCost(address: string, newCost: string) {
+  async function manageNFTCost(newCost: string) {
     setIsLoadingTransaction(true);
 
     const transactionParameters = {
-      to: contractAddress,
-      from: address,
-      // @ts-ignore
-      value: Web3.utils.toWei("0", "ether"),
-      gas: Web3.utils.toHex(100000),
+      gasLimit: 200000,
+      to: contractAddress
     };
 
     try {
-      const txhash = await contract.methods
-        .setNFTCost(newCost)
-        .send(transactionParameters)
-        .once("error", (err: any) => {
-          return err;
-        })
+      const setNFTCost = await contract.setNFTCost(newCost)
+      await setNFTCost.wait()
         .then((receipt: any) => {
+          txhash = receipt.transactionHash
           return receipt.transactionHash;
         });
 
-      const contractNftCost = await contract.methods.getNFTCost().call();
+      const contractNftCost = await contract.getNFTCost();
       setNftCost(contractNftCost);
 
       setIsLoadingTransaction(false);
@@ -873,32 +794,24 @@ export const useSmartContract = () => {
     }
   }
 
-  async function manageSupply(address: string, newSupply: string) {
+  async function manageSupply(newSupply: string) {
     setIsLoadingTransaction(true);
 
     const transactionParameters = {
-      to: contractAddress,
-      from: address,
-      // @ts-ignore
-      value: Web3.utils.toWei("0", "ether"),
-      gas: Web3.utils.toHex(100000),
+      gasLimit: 200000,
+      to: contractAddress
     };
 
     try {
-      const txhash = await contract.methods
-        .adminIncreaseMaxSupply(newSupply)
-        .send(transactionParameters)
-        .once("error", (err: any) => {
-          return err;
-        })
+      const adminIncreaseMaxSupply = await contract.adminIncreaseMaxSupply(newSupply)
+      await adminIncreaseMaxSupply.wait()
         .then((receipt: any) => {
+          txhash = receipt.transactionHash
           return receipt.transactionHash;
         });
 
       setIsLoadingTransaction(false);
-      const contractTotalSupply = await contract.methods
-        .getTotalSupply()
-        .call();
+      const contractTotalSupply = await contract.getTotalSupply()
       setTotalSupplyValue(contractTotalSupply);
       toast({
         status: "success",

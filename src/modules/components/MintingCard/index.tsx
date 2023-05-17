@@ -11,8 +11,6 @@ import { useSmartContract } from "../../../hooks/useSmartContract";
 export function MintCard() {
   const [quantity, setQuantity] = useState(1);
 
-  const { wallet } = useWallet();
-
   const {
     requestMint,
     totalSupplyValue,
@@ -82,7 +80,6 @@ export function MintCard() {
             isLoading={isLoadingTransaction}
             onPress={() =>
               requestMint({
-                address: wallet,
                 amount: quantity,
                 isAdmin: false,
                 isWhitelist: false,

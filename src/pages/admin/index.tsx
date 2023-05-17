@@ -11,13 +11,10 @@ import {
 
 import { useSmartContract } from "hooks/useSmartContract";
 
-import { useWallet } from "providers/WalletProvider";
-
 import { QuantityButton } from "../../modules/components/MintingCard/QuantityButton";
 import Web3 from "web3";
 
 export default function Admin() {
-  const { wallet } = useWallet();
   const {
     requestAddToWhitelist,
     requestAddToBlacklist,
@@ -50,31 +47,30 @@ export default function Admin() {
   const [newSupply, setNewSupply] = useState("");
 
   async function handleAddToWhitelist() {
-    await requestAddToWhitelist(wallet, whitelistAddressAdd);
+    await requestAddToWhitelist(whitelistAddressAdd);
     setWhitelistAddressAdd("");
   }
 
   async function handleAddToBlacklist() {
-    await requestAddToBlacklist(wallet, blacklistAddressAdd);
+    await requestAddToBlacklist(blacklistAddressAdd);
     setBlacklistAddressAdd("");
   }
 
   async function handleRemoveFromWhitelist() {
-    await requestRemoveFromWhitelist(wallet, whitelistAddressRemove);
+    await requestRemoveFromWhitelist(whitelistAddressRemove);
     setWhitelistAddressRemove("");
   }
   async function handleRemoveFromBlacklist() {
-    await requestRemoveFromBlacklist(wallet, blacklistAddressRemove);
+    await requestRemoveFromBlacklist(blacklistAddressRemove);
     setBlacklistAddressRemove("");
   }
 
   async function handleWithdraw() {
-    await withdraw(wallet);
+    await withdraw();
   }
 
   async function handleMint() {
     await requestMint({
-      address: wallet,
       amount: publicQuantity,
       isAdmin: whitelistAdminMint === "admin" ? true : false,
       isWhitelist: mintType === "whitelist" ? true : false,
@@ -83,31 +79,31 @@ export default function Admin() {
   }
 
   async function managePublicSale(state: boolean) {
-    await activatePublicSale(wallet, state);
+    await activatePublicSale(state);
   }
 
   async function manageWhitelistState(state: boolean) {
-    await activateWhitelist(wallet, state);
+    await activateWhitelist(state);
   }
 
 
   async function setNFTCostOnContract() {
-    await manageNFTCost(wallet, nftCostValue);
+    await manageNFTCost(nftCostValue);
     setNftCostValue("");
   }
 
   async function changeOwnershipOnContract() {
-    await changeOwnership(wallet, ownerAddress);
+    await changeOwnership(ownerAddress);
     setOwnerAddress("");
   }
 
   async function manageBaseURI() {
-    await setBaseUri(wallet, baseURI);
+    await setBaseUri(baseURI);
     setBaseURI("");
   }
 
   async function handleChangeSupply() {
-    await manageSupply(wallet, newSupply);
+    await manageSupply(newSupply);
     setNewSupply("");
   }
 
