@@ -3,6 +3,7 @@ declare global {
     ethereum?: any;
   }
 }
+
 import { useEffect, useState } from "react";
 import { useToast } from "@chakra-ui/react";
 import { ethers } from "ethers";
