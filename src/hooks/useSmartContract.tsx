@@ -30,29 +30,21 @@ export const useSmartContract = () => {
     process.env.NEXT_PUBLIC_CHAIN_ID === "5"
       ? "https://goerli.etherscan.io"
       : "https://etherscan.io";
+
   let provider: ethers.providers.Web3Provider | undefined
-  let contract: ethers.Contract
-  if (typeof globalThis.window?.ethereum != 'undefined') {
-    provider = new ethers.providers.Web3Provider(globalThis.window?.ethereum as any)
-    console.log({ provider });
-    const signer = provider.getSigner();
-    contract = new ethers.Contract(
-      cbai,
-      contractAddress, 
-      signer);
-  }
+  let contract: ethers.Contract | undefined
 
   async function initializeEngine() {
 
     if (contract && conn && !currentSupplyValue && !totalSupplyValue) {
-      const contractCurrentSupply = await contract.getCurrentSupply()
+      const contractCurrentSupply = await contract!.getCurrentSupply()
 
       setCurrentSupplyValue(contractCurrentSupply);
 
-      const contractTotalSupply = await contract.getTotalSupply()
+      const contractTotalSupply = await contract!.getTotalSupply()
       setTotalSupplyValue(contractTotalSupply);
 
-      const contractNftCost = await contract.getNFTCost();
+      const contractNftCost = await contract!.getNFTCost();
       setNftCost(contractNftCost);
     }
   }
@@ -60,6 +52,15 @@ export const useSmartContract = () => {
   function initState() {
     try {
       if (active) {
+        if (typeof globalThis.window?.ethereum != 'undefined') {
+          provider = new ethers.providers.Web3Provider(globalThis.window?.ethereum as any)
+          console.log({ provider });
+          const signer = provider.getSigner();
+          contract = new ethers.Contract(
+            cbai.toString(),
+            contractAddress!, 
+            signer);
+        }
         return;
       } else {
         activateBrowserWallet();
@@ -97,7 +98,7 @@ export const useSmartContract = () => {
     try {
       if (isWhitelist) {
         setIsLoadingTransaction(true);
-        const whitelistMint = await contract.whitelistMint(amount)
+        const whitelistMint = await contract!.whitelistMint(amount)
         await whitelistMint.wait()
           .then((receipt: any) => {
             txhash = receipt.transactionHash
@@ -106,7 +107,7 @@ export const useSmartContract = () => {
       } else {
 
         setIsLoadingTransaction(true);
-        const mint = await contract.mint(amount);
+        const mint = await contract!.mint(amount);
         await mint.wait()
           .then((receipt: any) => {
             txhash = receipt.transactionHash
@@ -114,7 +115,7 @@ export const useSmartContract = () => {
           });
       }
 
-      const contractCurrentSupply = await contract.getCurrentSupply()
+      const contractCurrentSupply = await contract!.getCurrentSupply()
 
       setCurrentSupplyValue(contractCurrentSupply);
       setIsLoadingTransaction(false);
@@ -176,7 +177,7 @@ export const useSmartContract = () => {
     };
 
     try {
-      const singleAddToWhitelist = await contract.singleAddToWhitelist(address)
+      const singleAddToWhitelist = await contract!.singleAddToWhitelist(address)
       await singleAddToWhitelist.wait()
         .then((receipt: any) => {
           txhash = receipt.transactionHash
@@ -239,7 +240,7 @@ export const useSmartContract = () => {
     };
 
     try {
-      const singleAddToBlacklist = await contract.singleAddToBlacklist(address)
+      const singleAddToBlacklist = await contract!.singleAddToBlacklist(address)
       await singleAddToBlacklist.wait()
         .then((receipt: any) => {
           txhash = receipt.transactionHash
@@ -302,7 +303,7 @@ export const useSmartContract = () => {
     };
 
     try {
-      const singleRemoveFromWhitelist = await contract.singleRemoveFromWhitelist(address)
+      const singleRemoveFromWhitelist = await contract!.singleRemoveFromWhitelist(address)
       await singleRemoveFromWhitelist.wait()
         .then((receipt: any) => {
           txhash = receipt.transactionHash
@@ -365,7 +366,7 @@ export const useSmartContract = () => {
     };
 
     try {
-      const singleRemoveFromBlacklist = await contract.singleRemoveFromBlacklist(address)
+      const singleRemoveFromBlacklist = await contract!.singleRemoveFromBlacklist(address)
       await singleRemoveFromBlacklist.wait()
         .then((receipt: any) => {
           txhash = receipt.transactionHash
@@ -426,7 +427,7 @@ export const useSmartContract = () => {
     };
 
     try {
-      const withdraw = await contract.withdraw()
+      const withdraw = await contract!.withdraw()
       await withdraw.wait()
         .then((receipt: any) => {
           txhash = receipt.transactionHash
@@ -488,7 +489,7 @@ export const useSmartContract = () => {
     };
 
     try {
-      const adminManageSaleState = await contract.adminManageSaleState(state)
+      const adminManageSaleState = await contract!.adminManageSaleState(state)
       await adminManageSaleState.wait()
         .then((receipt: any) => {
           txhash = receipt.transactionHash
@@ -551,7 +552,7 @@ export const useSmartContract = () => {
 
 
     try {
-      const adminManageWhitelistState = await contract.adminManageWhitelistState(state)
+      const adminManageWhitelistState = await contract!.adminManageWhitelistState(state)
       await adminManageWhitelistState.wait()
         .then((receipt: any) => {
           txhash = receipt.transactionHash
@@ -614,7 +615,7 @@ export const useSmartContract = () => {
     };
 
     try {
-      const transferOwnership = await contract.transferOwnership(ownerAddress)
+      const transferOwnership = await contract!.transferOwnership(ownerAddress)
       await transferOwnership.wait()
         .then((receipt: any) => {
           txhash = receipt.transactionHash
@@ -675,7 +676,7 @@ export const useSmartContract = () => {
     };
 
     try {
-      const setBaseURI = await contract.setBaseURI(baseUri)
+      const setBaseURI = await contract!.setBaseURI(baseUri)
       await setBaseURI.wait()
         .then((receipt: any) => {
           txhash = receipt.transactionHash
@@ -736,14 +737,14 @@ export const useSmartContract = () => {
     };
 
     try {
-      const setNFTCost = await contract.setNFTCost(newCost)
+      const setNFTCost = await contract!.setNFTCost(newCost)
       await setNFTCost.wait()
         .then((receipt: any) => {
           txhash = receipt.transactionHash
           return receipt.transactionHash;
         });
 
-      const contractNftCost = await contract.getNFTCost();
+      const contractNftCost = await contract!.getNFTCost();
       setNftCost(contractNftCost);
 
       setIsLoadingTransaction(false);
@@ -801,7 +802,7 @@ export const useSmartContract = () => {
     };
 
     try {
-      const adminIncreaseMaxSupply = await contract.adminIncreaseMaxSupply(newSupply)
+      const adminIncreaseMaxSupply = await contract!.adminIncreaseMaxSupply(newSupply)
       await adminIncreaseMaxSupply.wait()
         .then((receipt: any) => {
           txhash = receipt.transactionHash
@@ -809,7 +810,7 @@ export const useSmartContract = () => {
         });
 
       setIsLoadingTransaction(false);
-      const contractTotalSupply = await contract.getTotalSupply()
+      const contractTotalSupply = await contract!.getTotalSupply()
       setTotalSupplyValue(contractTotalSupply);
       toast({
         status: "success",
