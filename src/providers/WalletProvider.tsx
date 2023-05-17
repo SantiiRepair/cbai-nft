@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { useEthers } from "@usedapp/core";
+const { useEthers } = require('@usedapp/core');
 
 type WalletProviderProps<T> = {
   children: T;

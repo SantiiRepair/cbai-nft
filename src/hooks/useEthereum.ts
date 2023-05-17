@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useEthers } from '@usedapp/core';
 import Web3 from 'web3';
 import SmartContract from '../contracts/CBAI.json';
+const { useEthers } = require('@usedapp/core');
 
 const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 

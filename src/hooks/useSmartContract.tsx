@@ -6,11 +6,11 @@ declare global {
 
 import { useEffect, useState } from "react";
 import { useToast } from "@chakra-ui/react";
-import { ethers } from "ethers";
-import { useEthers } from '@usedapp/core';
 import SmartContract from "../contracts/CBAI.json";
 import { useWallet } from "../providers/WalletProvider";
 import { Toast } from "../modules/components/Toast";
+const { ethers } = require("ethers");
+const { useEthers } = require('@usedapp/core');
 
 // const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 const contractAddress = process.env.CONTRACT_ADDRESS;

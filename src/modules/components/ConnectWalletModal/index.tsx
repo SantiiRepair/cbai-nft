@@ -11,7 +11,7 @@ import {
   Button,
   Flex,
 } from "@chakra-ui/react";
-import { useEthers } from "@usedapp/core";
+const { useEthers } = require('@usedapp/core');
 
 interface ModalProps {
   wallet?: string;
