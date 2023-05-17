@@ -36,7 +36,7 @@ export const useSmartContract = () => {
       ? "https://goerli.etherscan.io"
       : "https://etherscan.io";
 
-  const provider = new ethers.Wallet(globalThis.window?.ethereum);
+  const provider = new ethers.BrowserProvider(globalThis.window?.ethereum);
   const signer = provider.getSigner();
   const contract = new ethers.Contract(
     // @ts-ignore
