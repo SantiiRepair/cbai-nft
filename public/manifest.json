@@ -3,7 +3,7 @@
   "short_name": "NextJS with Chakra-ui Boilerplate",
   "icons": [
     {
-      "src": "/img/chakra-logo.png",
+      "src": "/img/cai-logo.png",
       "type": "image/png",
       "sizes": "48x48"
     }

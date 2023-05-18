@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import WalletConnect from "@walletconnect/client";
 import QRCodeModal from "@walletconnect/qrcode-modal";
 import {
@@ -11,7 +11,7 @@ import {
   Button,
   Flex,
 } from "@chakra-ui/react";
-const { useEthers } = require('@usedapp/core');
+import { useEthers } from '@usedapp/core';
 
 interface ModalProps {
   wallet?: string;
@@ -38,61 +38,61 @@ export function ConnectWalletModal({
     setVisible(false);
   }
 
-  function handleWalletConnect() {
-    connector.createSession();
-
-    setVisible(false);
-  }
-
   const connector = new WalletConnect({
     bridge: "https://bridge.walletconnect.org",
     qrcodeModal: QRCodeModal,
   });
 
-  connector.on("connect", (error, payload) => {
-    if (error) {
-      throw error;
-    }
+  function handleWalletConnect() {
 
-    const { accounts } = payload.params[0];
-    setIsWalletConnect(true);
+    connector.on("connect", (error, payload) => {
+      if (error) {
+        throw error;
+      } const { accounts } = payload.params[0];
 
-    if (accounts[0]) {
-      setWallet(accounts[0]);
-    }
-  });
-
-  connector.on("session_update", (error, payload) => {
-    if (error) {
-      throw error;
-    }
-
-    const { accounts } = payload.params[0];
-    setIsWalletConnect(true);
-
-    if (accounts[0]) {
-      setWallet(accounts[0]);
-    }
-  });
-
-  connector.on("disconnect", (error) => {
-    if (error) {
-      throw error;
-    }
-  });
-
-  useEffect(() => {
-    if (connector.connected) {
-      const accounts = connector.accounts;
       setIsWalletConnect(true);
-      //const chainId = connector.chainId;
 
-      // @ts-ignore
       if (accounts[0]) {
         setWallet(accounts[0]);
       }
-    }
-  }, []);
+    });
+
+    connector.on("session_update", (error, payload) => {
+      if (error) {
+        throw error;
+      }
+
+      const { accounts } = payload.params[0];
+      setIsWalletConnect(true);
+
+      if (accounts[0]) {
+        setWallet(accounts[0]);
+      }
+    });
+
+    connector.on("disconnect", (error) => {
+      if (error) {
+        throw error;
+      }
+    });
+
+    connector.createSession();
+
+    setVisible(false);
+  }
+
+  // useEffect(() => {
+  //    if (connector.connected) {
+  //      const accounts = connector.accounts;
+  //      setIsWalletConnect(true);
+  //      //const chainId = connector.chainId;
+
+  //     @ts-ignore
+  //     if (accounts[0]) {
+  //       setWallet(accounts[0]);
+  //      }
+  //    }
+  //  }, []);
 
   return (
     <Modal isOpen={visible} onClose={handleModalOpen}>
