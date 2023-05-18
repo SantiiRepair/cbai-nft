@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@chakra-ui/react";
 import { cbai } from "../contracts/parsedAbi/cbai";
-import { useWallet } from "../providers/WalletProvider";
+// import { useWallet } from "../providers/WalletProvider";
 import { Toast } from "../modules/components/Toast";
 import { ethers } from "ethers";
 import { useEthers } from '@usedapp/core';
@@ -20,7 +20,7 @@ let txhash: string
 export const useSmartContract = () => {
   const toast = useToast();
   const { active, activateBrowserWallet } = useEthers();
-  const { conn } = useWallet();
+  // const { conn } = useWallet();
   const [currentSupplyValue, setCurrentSupplyValue] = useState(null);
   const [totalSupplyValue, setTotalSupplyValue] = useState(null);
   const [nftCost, setNftCost] = useState(0);
@@ -34,20 +34,20 @@ export const useSmartContract = () => {
   let provider: ethers.providers.Web3Provider | undefined
   let contract: ethers.Contract | undefined
 
-  async function initializeEngine() {
-
-    if (contract && conn && !currentSupplyValue && !totalSupplyValue) {
-      const contractCurrentSupply = await contract!.getCurrentSupply()
-
-      setCurrentSupplyValue(contractCurrentSupply);
-
-      const contractTotalSupply = await contract!.getTotalSupply()
-      setTotalSupplyValue(contractTotalSupply);
-
-      const contractNftCost = await contract!.getNFTCost();
-      setNftCost(contractNftCost);
-    }
-  }
+  /* async function initializeEngine() {
+ 
+     if (contract && conn && !currentSupplyValue && !totalSupplyValue) {
+       const contractCurrentSupply = await contract!.getCurrentSupply()
+ 
+       setCurrentSupplyValue(contractCurrentSupply);
+ 
+       const contractTotalSupply = await contract!.getTotalSupply()
+       setTotalSupplyValue(contractTotalSupply);
+ 
+       const contractNftCost = await contract!.getNFTCost();
+       setNftCost(contractNftCost);
+     }
+   } */
 
   function initState() {
     try {
@@ -58,8 +58,9 @@ export const useSmartContract = () => {
           const signer = provider.getSigner();
           contract = new ethers.Contract(
             cbai.toString(),
-            contractAddress!, 
+            contractAddress!,
             signer);
+          console.log({ contract });
         }
         return;
       } else {
@@ -71,28 +72,16 @@ export const useSmartContract = () => {
   }
 
   useEffect(() => {
-    initState();
+    setInterval(() => {
+      initState()
+    }, 5000)
   }, []);
 
   async function requestMint({
     amount,
-    isAdmin,
     isWhitelist,
   }: MintProps) {
     setIsLoadingTransaction(false);
-    let transactionParameters;
-
-    if (isAdmin) {
-      transactionParameters = {
-        gasLimit: 200000,
-        to: contractAddress
-      };
-    } else {
-      transactionParameters = {
-        gasLimit: 200000,
-        to: contractAddress
-      };
-    }
 
     let txHash: string;
     try {
@@ -171,11 +160,6 @@ export const useSmartContract = () => {
   ) {
     setIsLoadingTransaction(true);
 
-    const transactionParameters = {
-      gasLimit: 200000,
-      to: contractAddress
-    };
-
     try {
       const singleAddToWhitelist = await contract!.singleAddToWhitelist(address)
       await singleAddToWhitelist.wait()
@@ -233,11 +217,6 @@ export const useSmartContract = () => {
     address: string
   ) {
     setIsLoadingTransaction(true);
-
-    const transactionParameters = {
-      gasLimit: 200000,
-      to: contractAddress
-    };
 
     try {
       const singleAddToBlacklist = await contract!.singleAddToBlacklist(address)
@@ -297,11 +276,6 @@ export const useSmartContract = () => {
   ) {
     setIsLoadingTransaction(true);
 
-    const transactionParameters = {
-      gasLimit: 200000,
-      to: contractAddress
-    };
-
     try {
       const singleRemoveFromWhitelist = await contract!.singleRemoveFromWhitelist(address)
       await singleRemoveFromWhitelist.wait()
@@ -360,10 +334,8 @@ export const useSmartContract = () => {
   ) {
     setIsLoadingTransaction(true);
 
-    const transactionParameters = {
-      gasLimit: 200000,
-      to: contractAddress
-    };
+
+
 
     try {
       const singleRemoveFromBlacklist = await contract!.singleRemoveFromBlacklist(address)
@@ -421,10 +393,8 @@ export const useSmartContract = () => {
   async function withdraw() {
     setIsLoadingTransaction(true);
 
-    const transactionParameters = {
-      gasLimit: 200000,
-      to: contractAddress
-    };
+
+
 
     try {
       const withdraw = await contract!.withdraw()
@@ -483,10 +453,8 @@ export const useSmartContract = () => {
   async function activatePublicSale(state: boolean) {
     setIsLoadingTransaction(true);
 
-    const transactionParameters = {
-      gasLimit: 200000,
-      to: contractAddress
-    };
+
+
 
     try {
       const adminManageSaleState = await contract!.adminManageSaleState(state)
@@ -544,11 +512,6 @@ export const useSmartContract = () => {
 
   async function activateWhitelist(state: boolean) {
     setIsLoadingTransaction(true);
-
-    const transactionParameters = {
-      gasLimit: 200000,
-      to: contractAddress
-    };
 
 
     try {
@@ -609,10 +572,8 @@ export const useSmartContract = () => {
   async function changeOwnership(ownerAddress: string) {
     setIsLoadingTransaction(true);
 
-    const transactionParameters = {
-      gasLimit: 200000,
-      to: contractAddress
-    };
+
+
 
     try {
       const transferOwnership = await contract!.transferOwnership(ownerAddress)
@@ -670,11 +631,6 @@ export const useSmartContract = () => {
   async function setBaseUri(baseUri: string) {
     setIsLoadingTransaction(true);
 
-    const transactionParameters = {
-      gasLimit: 200000,
-      to: contractAddress
-    };
-
     try {
       const setBaseURI = await contract!.setBaseURI(baseUri)
       await setBaseURI.wait()
@@ -730,11 +686,6 @@ export const useSmartContract = () => {
 
   async function manageNFTCost(newCost: string) {
     setIsLoadingTransaction(true);
-
-    const transactionParameters = {
-      gasLimit: 200000,
-      to: contractAddress
-    };
 
     try {
       const setNFTCost = await contract!.setNFTCost(newCost)
@@ -795,11 +746,6 @@ export const useSmartContract = () => {
 
   async function manageSupply(newSupply: string) {
     setIsLoadingTransaction(true);
-
-    const transactionParameters = {
-      gasLimit: 200000,
-      to: contractAddress
-    };
 
     try {
       const adminIncreaseMaxSupply = await contract!.adminIncreaseMaxSupply(newSupply)
