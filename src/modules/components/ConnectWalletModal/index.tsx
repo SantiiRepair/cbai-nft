@@ -97,13 +97,17 @@ export function ConnectWalletModal({
   return (
     <Modal isOpen={visible} onClose={handleModalOpen}>
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent bg={"#1a202c"}>
         <ModalHeader>Choose your preferred wallet</ModalHeader>
         <ModalCloseButton />
 
         <ModalBody>
           <Flex flexDir={"column"}>
-            <Button
+            <Button 
+            bg={"#0e1019"}
+            _hover={{
+              bg: "#11131a",
+            }}
               m={"0.5rem"}
               onClick={() => {
                 handleMetamaskConnect();
@@ -111,8 +115,12 @@ export function ConnectWalletModal({
             >
               Metamask
             </Button>
-            <Button
+            <Button 
+            bg={"#0e1019"}
               m={"0.5rem"}
+              _hover={{
+                bg: "#11131a",
+              }}
               onClick={() => {
                 handleWalletConnect();
               }}
@@ -124,6 +132,10 @@ export function ConnectWalletModal({
             {wallet && (
               <Button
                 m={"0.5rem"}
+                bg={"#0e1019"}
+                _hover={{
+                  bg: "#11131a",
+                }}
                 onClick={() => {
                   if (isWalletConnect) {
                     setIsWalletConnect(false);

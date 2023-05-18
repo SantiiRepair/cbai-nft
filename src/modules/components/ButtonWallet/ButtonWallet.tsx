@@ -55,7 +55,7 @@ export function ButtonWallet({
         letterSpacing={"2px"}
         transition={"filter 0.2s"}
         _hover={{
-          filter: "brightness(1.2)",
+          bg: "#000000ca",
         }}
         overflow={"hidden"}
         isLoading={!isHeader && isLoading}
