@@ -10,6 +10,18 @@ export function MintCard() {
   const [quantity, setQuantity] = useState(1);
   const { active } = useEthers();
 
+  function metamask() {
+    try {
+      if (active && typeof globalThis.window?.ethereum != 'undefined') {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error: any) {
+      console.error(error);
+    }
+  }
+
   const {
     requestMint,
     totalSupplyValue,
@@ -48,7 +60,7 @@ export function MintCard() {
           <Flex pt={"1rem"}>
             <Text>TOTAL MINTED: </Text>
             <Text pl={"0.5rem"} color={"#2F71C0"} fontWeight={"600"}>
-              {active ? `${currentSupplyValue} / ${totalSupplyValue}` : '0 / 0'}
+              {metamask() ? `${currentSupplyValue} / ${totalSupplyValue}` : '0 / 0'}
             </Text>
           </Flex>
         </Flex>

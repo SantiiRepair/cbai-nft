@@ -15,8 +15,6 @@ interface MintProps {
   isWhitelist: boolean;
 }
 
-let txhash: string
-
 export const useSmartContract = () => {
   const toast = useToast();
   const { active, activateBrowserWallet } = useEthers();
@@ -33,7 +31,8 @@ export const useSmartContract = () => {
 
   let provider: ethers.providers.Web3Provider | undefined
   let contract: ethers.Contract | undefined
-
+  let txhash: string
+  
   /* async function initializeEngine() {
  
      if (contract && conn && !currentSupplyValue && !totalSupplyValue) {
@@ -87,7 +86,7 @@ export const useSmartContract = () => {
     try {
       if (isWhitelist) {
         setIsLoadingTransaction(true);
-        const whitelistMint = await contract!.whitelistMint(amount)
+        const whitelistMint = await contract?.whitelistMint(amount)
         await whitelistMint.wait()
           .then((receipt: any) => {
             txhash = receipt.transactionHash
@@ -96,7 +95,7 @@ export const useSmartContract = () => {
       } else {
 
         setIsLoadingTransaction(true);
-        const mint = await contract!.mint(amount);
+        const mint = await contract?.mint(amount);
         await mint.wait()
           .then((receipt: any) => {
             txhash = receipt.transactionHash
