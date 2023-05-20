@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useToast } from "@chakra-ui/react";
 import { cbai } from "../contracts/parsedAbi/cbai";
 // import { useWallet } from "../providers/WalletProvider";
 import { Toast } from "../modules/components/Toast";
 import { ethers } from "ethers";
-import { useEthers } from '@usedapp/core';
+import { useEthers } from "@usedapp/core";
 
 // const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 const contractAddress = process.env.CONTRACT_ADDRESS;
@@ -29,10 +29,10 @@ export const useSmartContract = () => {
       ? "https://goerli.etherscan.io"
       : "https://etherscan.io";
 
-  let provider: ethers.providers.Web3Provider | undefined
-  let contract: ethers.Contract | undefined
-  let txhash: string
-  
+  let provider: ethers.providers.Web3Provider | undefined;
+  let contract: ethers.Contract | undefined;
+  let txhash: string;
+
   /* async function initializeEngine() {
  
      if (contract && conn && !currentSupplyValue && !totalSupplyValue) {
@@ -48,17 +48,20 @@ export const useSmartContract = () => {
      }
    } */
 
-  function initState() {
+  async function initState() {
     try {
       if (active) {
-        if (typeof globalThis.window?.ethereum != 'undefined') {
-          provider = new ethers.providers.Web3Provider(globalThis.window?.ethereum as any)
+        if (typeof globalThis.window?.ethereum != "undefined") {
+          provider = new ethers.providers.Web3Provider(
+            globalThis.window?.ethereum as any
+          );
           console.log({ provider });
           const signer = provider.getSigner();
           contract = new ethers.Contract(
             cbai.toString(),
             contractAddress!,
-            signer);
+            signer
+          );
           console.log({ contract });
         }
         return;
@@ -70,40 +73,29 @@ export const useSmartContract = () => {
     }
   }
 
-  useEffect(() => {
-    setInterval(() => {
-      initState()
-    }, 5000)
-  }, []);
-
-  async function requestMint({
-    amount,
-    isWhitelist,
-  }: MintProps) {
+  async function requestMint({ amount, isWhitelist }: MintProps) {
+    await initState();
     setIsLoadingTransaction(false);
 
     let txHash: string;
     try {
       if (isWhitelist) {
         setIsLoadingTransaction(true);
-        const whitelistMint = await contract?.whitelistMint(amount)
-        await whitelistMint.wait()
-          .then((receipt: any) => {
-            txhash = receipt.transactionHash
-            return receipt.transactionHash;
-          });
+        const whitelistMint = await contract?.whitelistMint(amount);
+        await whitelistMint.wait().then((receipt: any) => {
+          txhash = receipt.transactionHash;
+          return receipt.transactionHash;
+        });
       } else {
-
         setIsLoadingTransaction(true);
         const mint = await contract?.mint(amount);
-        await mint.wait()
-          .then((receipt: any) => {
-            txhash = receipt.transactionHash
-            return receipt.transactionHash;
-          });
+        await mint.wait().then((receipt: any) => {
+          txhash = receipt.transactionHash;
+          return receipt.transactionHash;
+        });
       }
 
-      const contractCurrentSupply = await contract!.getCurrentSupply()
+      const contractCurrentSupply = await contract!.getCurrentSupply();
 
       setCurrentSupplyValue(contractCurrentSupply);
       setIsLoadingTransaction(false);
@@ -126,7 +118,7 @@ export const useSmartContract = () => {
       };
     } catch (error: any) {
       setIsLoadingTransaction(false);
-      console.error(error)
+      console.error(error);
       if (error.receipt) {
         toast({
           status: "error",
@@ -150,22 +142,20 @@ export const useSmartContract = () => {
           status: `😥 Something went wrong, check error at Etherscan: https://etherscan.io/tx/${error.receipt.transactionHash}`,
         };
       }
-
     }
   }
 
-  async function requestAddToWhitelist(
-    address: string
-  ) {
+  async function requestAddToWhitelist(address: string) {
     setIsLoadingTransaction(true);
 
     try {
-      const singleAddToWhitelist = await contract!.singleAddToWhitelist(address)
-      await singleAddToWhitelist.wait()
-        .then((receipt: any) => {
-          txhash = receipt.transactionHash
-          return receipt.transactionHash;
-        });
+      const singleAddToWhitelist = await contract!.singleAddToWhitelist(
+        address
+      );
+      await singleAddToWhitelist.wait().then((receipt: any) => {
+        txhash = receipt.transactionHash;
+        return receipt.transactionHash;
+      });
 
       setIsLoadingTransaction(false);
       toast({
@@ -212,18 +202,17 @@ export const useSmartContract = () => {
     }
   }
 
-  async function requestAddToBlacklist(
-    address: string
-  ) {
+  async function requestAddToBlacklist(address: string) {
     setIsLoadingTransaction(true);
 
     try {
-      const singleAddToBlacklist = await contract!.singleAddToBlacklist(address)
-      await singleAddToBlacklist.wait()
-        .then((receipt: any) => {
-          txhash = receipt.transactionHash
-          return receipt.transactionHash;
-        });
+      const singleAddToBlacklist = await contract!.singleAddToBlacklist(
+        address
+      );
+      await singleAddToBlacklist.wait().then((receipt: any) => {
+        txhash = receipt.transactionHash;
+        return receipt.transactionHash;
+      });
 
       setIsLoadingTransaction(false);
       toast({
@@ -270,18 +259,16 @@ export const useSmartContract = () => {
     }
   }
 
-  async function requestRemoveFromWhitelist(
-    address: string
-  ) {
+  async function requestRemoveFromWhitelist(address: string) {
     setIsLoadingTransaction(true);
 
     try {
-      const singleRemoveFromWhitelist = await contract!.singleRemoveFromWhitelist(address)
-      await singleRemoveFromWhitelist.wait()
-        .then((receipt: any) => {
-          txhash = receipt.transactionHash
-          return receipt.transactionHash;
-        });
+      const singleRemoveFromWhitelist =
+        await contract!.singleRemoveFromWhitelist(address);
+      await singleRemoveFromWhitelist.wait().then((receipt: any) => {
+        txhash = receipt.transactionHash;
+        return receipt.transactionHash;
+      });
 
       setIsLoadingTransaction(false);
       toast({
@@ -328,21 +315,16 @@ export const useSmartContract = () => {
     }
   }
 
-  async function requestRemoveFromBlacklist(
-    address: string
-  ) {
+  async function requestRemoveFromBlacklist(address: string) {
     setIsLoadingTransaction(true);
 
-
-
-
     try {
-      const singleRemoveFromBlacklist = await contract!.singleRemoveFromBlacklist(address)
-      await singleRemoveFromBlacklist.wait()
-        .then((receipt: any) => {
-          txhash = receipt.transactionHash
-          return receipt.transactionHash;
-        });
+      const singleRemoveFromBlacklist =
+        await contract!.singleRemoveFromBlacklist(address);
+      await singleRemoveFromBlacklist.wait().then((receipt: any) => {
+        txhash = receipt.transactionHash;
+        return receipt.transactionHash;
+      });
 
       setIsLoadingTransaction(false);
       toast({
@@ -392,16 +374,12 @@ export const useSmartContract = () => {
   async function withdraw() {
     setIsLoadingTransaction(true);
 
-
-
-
     try {
-      const withdraw = await contract!.withdraw()
-      await withdraw.wait()
-        .then((receipt: any) => {
-          txhash = receipt.transactionHash
-          return receipt.transactionHash;
-        });
+      const withdraw = await contract!.withdraw();
+      await withdraw.wait().then((receipt: any) => {
+        txhash = receipt.transactionHash;
+        return receipt.transactionHash;
+      });
 
       setIsLoadingTransaction(false);
       toast({
@@ -452,16 +430,12 @@ export const useSmartContract = () => {
   async function activatePublicSale(state: boolean) {
     setIsLoadingTransaction(true);
 
-
-
-
     try {
-      const adminManageSaleState = await contract!.adminManageSaleState(state)
-      await adminManageSaleState.wait()
-        .then((receipt: any) => {
-          txhash = receipt.transactionHash
-          return receipt.transactionHash;
-        });
+      const adminManageSaleState = await contract!.adminManageSaleState(state);
+      await adminManageSaleState.wait().then((receipt: any) => {
+        txhash = receipt.transactionHash;
+        return receipt.transactionHash;
+      });
 
       setIsLoadingTransaction(false);
       toast({
@@ -512,15 +486,14 @@ export const useSmartContract = () => {
   async function activateWhitelist(state: boolean) {
     setIsLoadingTransaction(true);
 
-
     try {
-      const adminManageWhitelistState = await contract!.adminManageWhitelistState(state)
-      await adminManageWhitelistState.wait()
-        .then((receipt: any) => {
-          txhash = receipt.transactionHash
-          txhash = receipt.transactionHash
-          return receipt.transactionHash;
-        });
+      const adminManageWhitelistState =
+        await contract!.adminManageWhitelistState(state);
+      await adminManageWhitelistState.wait().then((receipt: any) => {
+        txhash = receipt.transactionHash;
+        txhash = receipt.transactionHash;
+        return receipt.transactionHash;
+      });
 
       setIsLoadingTransaction(false);
       toast({
@@ -571,16 +544,12 @@ export const useSmartContract = () => {
   async function changeOwnership(ownerAddress: string) {
     setIsLoadingTransaction(true);
 
-
-
-
     try {
-      const transferOwnership = await contract!.transferOwnership(ownerAddress)
-      await transferOwnership.wait()
-        .then((receipt: any) => {
-          txhash = receipt.transactionHash
-          return receipt.transactionHash;
-        });
+      const transferOwnership = await contract!.transferOwnership(ownerAddress);
+      await transferOwnership.wait().then((receipt: any) => {
+        txhash = receipt.transactionHash;
+        return receipt.transactionHash;
+      });
 
       setIsLoadingTransaction(false);
       toast({
@@ -631,12 +600,11 @@ export const useSmartContract = () => {
     setIsLoadingTransaction(true);
 
     try {
-      const setBaseURI = await contract!.setBaseURI(baseUri)
-      await setBaseURI.wait()
-        .then((receipt: any) => {
-          txhash = receipt.transactionHash
-          return receipt.transactionHash;
-        });
+      const setBaseURI = await contract!.setBaseURI(baseUri);
+      await setBaseURI.wait().then((receipt: any) => {
+        txhash = receipt.transactionHash;
+        return receipt.transactionHash;
+      });
 
       setIsLoadingTransaction(false);
       toast({
@@ -687,12 +655,11 @@ export const useSmartContract = () => {
     setIsLoadingTransaction(true);
 
     try {
-      const setNFTCost = await contract!.setNFTCost(newCost)
-      await setNFTCost.wait()
-        .then((receipt: any) => {
-          txhash = receipt.transactionHash
-          return receipt.transactionHash;
-        });
+      const setNFTCost = await contract!.setNFTCost(newCost);
+      await setNFTCost.wait().then((receipt: any) => {
+        txhash = receipt.transactionHash;
+        return receipt.transactionHash;
+      });
 
       const contractNftCost = await contract!.getNFTCost();
       setNftCost(contractNftCost);
@@ -747,15 +714,16 @@ export const useSmartContract = () => {
     setIsLoadingTransaction(true);
 
     try {
-      const adminIncreaseMaxSupply = await contract!.adminIncreaseMaxSupply(newSupply)
-      await adminIncreaseMaxSupply.wait()
-        .then((receipt: any) => {
-          txhash = receipt.transactionHash
-          return receipt.transactionHash;
-        });
+      const adminIncreaseMaxSupply = await contract!.adminIncreaseMaxSupply(
+        newSupply
+      );
+      await adminIncreaseMaxSupply.wait().then((receipt: any) => {
+        txhash = receipt.transactionHash;
+        return receipt.transactionHash;
+      });
 
       setIsLoadingTransaction(false);
-      const contractTotalSupply = await contract!.getTotalSupply()
+      const contractTotalSupply = await contract!.getTotalSupply();
       setTotalSupplyValue(contractTotalSupply);
       toast({
         status: "success",
