@@ -7,7 +7,6 @@ import { ethers } from "ethers";
 import { useEthers } from "@usedapp/core";
 
 // const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
-const contractAddress = process.env.CONTRACT_ADDRESS;
 
 interface MintProps {
   amount: number;
@@ -16,6 +15,7 @@ interface MintProps {
 }
 
 export const useSmartContract = () => {
+  const contractAddress = "0x2727206a77140749A950BD11Ab29EF207F249908";
   const toast = useToast();
   const { active, activateBrowserWallet } = useEthers();
   // const { conn } = useWallet();
@@ -29,8 +29,8 @@ export const useSmartContract = () => {
       ? "https://goerli.etherscan.io"
       : "https://etherscan.io";
 
-  let provider: ethers.providers.Web3Provider | undefined;
-  let contract: ethers.Contract | undefined;
+  let provider: ethers.providers.Web3Provider;
+  let contract: ethers.Contract;
   let txhash: string;
 
   /* async function initializeEngine() {
@@ -52,16 +52,13 @@ export const useSmartContract = () => {
     try {
       if (active) {
         if (typeof globalThis.window?.ethereum != "undefined") {
+          console.log({ active });
           provider = new ethers.providers.Web3Provider(
             globalThis.window?.ethereum as any
           );
           console.log({ provider });
           const signer = provider.getSigner();
-          contract = new ethers.Contract(
-            cbai.toString(),
-            contractAddress!,
-            signer
-          );
+          contract = new ethers.Contract(contractAddress, cbai, signer);
           console.log({ contract });
         }
         return;
@@ -76,8 +73,6 @@ export const useSmartContract = () => {
   async function requestMint({ amount, isWhitelist }: MintProps) {
     await initState();
     setIsLoadingTransaction(false);
-
-    let txHash: string;
     try {
       if (isWhitelist) {
         setIsLoadingTransaction(true);
@@ -107,7 +102,7 @@ export const useSmartContract = () => {
           <Toast
             title={"Transaction successful!"}
             message={"Check out your transaction on Etherscan:"}
-            messageLink={`${baseLink}/tx/${txHash}`}
+            messageLink={`${baseLink}/tx/${txhash}`}
             isSuccess
           />
         ),
