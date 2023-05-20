@@ -4,15 +4,27 @@ import { useState } from "react";
 import { ButtonWallet } from "../ButtonWallet/ButtonWallet";
 import Link from "next/link";
 import { useSmartContract } from "../../../hooks/useSmartContract";
-import { useEthers } from '@usedapp/core';
+import { useEthers } from "@usedapp/core";
 
 export function MintCard() {
   const [quantity, setQuantity] = useState(1);
   const { active } = useEthers();
 
+  const {
+    requestMint,
+    totalSupplyValue,
+    currentSupplyValue,
+    isLoadingTransaction,
+  } = useSmartContract();
+
   function metamask() {
     try {
-      if (active && typeof globalThis.window?.ethereum != 'undefined') {
+      if (
+        active &&
+        typeof globalThis.window?.ethereum != "undefined" &&
+        totalSupplyValue != null &&
+        currentSupplyValue != null
+      ) {
         return true;
       } else {
         return false;
@@ -21,13 +33,6 @@ export function MintCard() {
       console.error(error);
     }
   }
-
-  const {
-    requestMint,
-    totalSupplyValue,
-    currentSupplyValue,
-    isLoadingTransaction,
-  } = useSmartContract();
 
   return (
     <Flex w={"100%"} h={"100%"} align={"center"} justify={"center"}>
@@ -60,7 +65,9 @@ export function MintCard() {
           <Flex pt={"1rem"}>
             <Text>TOTAL MINTED: </Text>
             <Text pl={"0.5rem"} color={"#2F71C0"} fontWeight={"600"}>
-              {metamask() ? `${currentSupplyValue} / ${totalSupplyValue}` : '0 / 0'}
+              {metamask()
+                ? `${currentSupplyValue} / ${totalSupplyValue}`
+                : "0 / 0"}
             </Text>
           </Flex>
         </Flex>

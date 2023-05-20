@@ -24,31 +24,35 @@ export const useSmartContract = () => {
   const [nftCost, setNftCost] = useState(0);
   const [isLoadingTransaction, setIsLoadingTransaction] = useState(false);
 
-  const baseLink =
-    process.env.NEXT_PUBLIC_CHAIN_ID === "5"
-      ? "https://goerli.etherscan.io"
-      : "https://etherscan.io";
-
+  let baseLink: string;
   let provider: ethers.providers.Web3Provider;
   let contract: ethers.Contract;
   let txhash: string;
 
-  /* async function initializeEngine() {
- 
-     if (contract && conn && !currentSupplyValue && !totalSupplyValue) {
-       const contractCurrentSupply = await contract!.getCurrentSupply()
- 
-       setCurrentSupplyValue(contractCurrentSupply);
- 
-       const contractTotalSupply = await contract!.getTotalSupply()
-       setTotalSupplyValue(contractTotalSupply);
- 
-       const contractNftCost = await contract!.getNFTCost();
-       setNftCost(contractNftCost);
-     }
-   } */
+  function getBlockExplorerUrl(chainId: number): string {
+    switch (chainId) {
+      case 1:
+        return "https://etherscan.io";
+      case 3:
+        return "https://ropsten.etherscan.io";
+      case 4:
+        return "https://rinkeby.etherscan.io";
+      case 5:
+        return "https://goerli.etherscan.io";
+      case 42:
+        return "https://kovan.etherscan.io";
+      case 56:
+        return "https://bscscan.com";
+      case 97:
+        return "https://testnet.bscscan.com";
+      case 11155111:
+        return "https://sepolia.etherscan.io";
+      default:
+        return "";
+    }
+  }
 
-  async function initState() {
+  async function getParams() {
     try {
       if (active) {
         if (typeof globalThis.window?.ethereum != "undefined") {
@@ -60,6 +64,10 @@ export const useSmartContract = () => {
           const signer = provider.getSigner();
           contract = new ethers.Contract(contractAddress, cbai, signer);
           console.log({ contract });
+          const network = await provider.getNetwork();
+          const chainId = network.chainId;
+          const blockExplorerUrl = getBlockExplorerUrl(chainId);
+          baseLink = blockExplorerUrl;
         }
         return;
       } else {
@@ -71,19 +79,19 @@ export const useSmartContract = () => {
   }
 
   async function requestMint({ amount, isWhitelist }: MintProps) {
-    await initState();
+    await getParams();
     setIsLoadingTransaction(false);
     try {
       if (isWhitelist) {
         setIsLoadingTransaction(true);
-        const whitelistMint = await contract?.whitelistMint(amount);
+        const whitelistMint = await contract!.whitelistMint(amount);
         await whitelistMint.wait().then((receipt: any) => {
           txhash = receipt.transactionHash;
           return receipt.transactionHash;
         });
       } else {
         setIsLoadingTransaction(true);
-        const mint = await contract?.mint(amount);
+        const mint = await contract!.mint(amount);
         await mint.wait().then((receipt: any) => {
           txhash = receipt.transactionHash;
           return receipt.transactionHash;
@@ -101,7 +109,7 @@ export const useSmartContract = () => {
         render: () => (
           <Toast
             title={"Transaction successful!"}
-            message={"Check out your transaction on Etherscan:"}
+            message={"Check out your transaction on Explorer:"}
             messageLink={`${baseLink}/tx/${txhash}`}
             isSuccess
           />
@@ -109,7 +117,7 @@ export const useSmartContract = () => {
       });
       return {
         success: true,
-        status: `✅ Check out your transaction on Etherscan: https://etherscan.io/tx/${txHash!}`,
+        status: `✅ Check out your transaction on Explorer: ${baseLink}/tx/${txhash}`,
       };
     } catch (error: any) {
       setIsLoadingTransaction(false);
@@ -122,7 +130,7 @@ export const useSmartContract = () => {
           render: () => (
             <Toast
               title={"Transaction failed."}
-              message={"😥 Something went wrong, check error at Etherscan!"}
+              message={"😥 Something went wrong, check error at Explorer!"}
               messageLink={
                 error.receipt
                   ? `${baseLink}/tx/${error.receipt.transactionHash}`
@@ -134,15 +142,15 @@ export const useSmartContract = () => {
 
         return {
           success: false,
-          status: `😥 Something went wrong, check error at Etherscan: https://etherscan.io/tx/${error.receipt.transactionHash}`,
+          status: `😥 Something went wrong, check error at Explorer: ${baseLink}/tx/${error.receipt.transactionHash}`,
         };
       }
     }
   }
 
   async function requestAddToWhitelist(address: string) {
+    await getParams();
     setIsLoadingTransaction(true);
-
     try {
       const singleAddToWhitelist = await contract!.singleAddToWhitelist(
         address
@@ -160,7 +168,7 @@ export const useSmartContract = () => {
         render: () => (
           <Toast
             title={"Successfully added address to whitelist!"}
-            message={"Check out your transaction on Etherscan:"}
+            message={"Check out your transaction on Explorer:"}
             messageLink={`${baseLink}/tx/${txhash}`}
             isSuccess
           />
@@ -180,7 +188,7 @@ export const useSmartContract = () => {
           render: () => (
             <Toast
               title={"Failed to add to whitelist!"}
-              message={"😥 Something went wrong, check error at Etherscan!"}
+              message={"😥 Something went wrong, check error at Explorer!"}
               messageLink={
                 error.receipt
                   ? `${baseLink}/tx/${error.receipt.transactionHash}`
@@ -192,14 +200,14 @@ export const useSmartContract = () => {
       }
       return {
         success: false,
-        status: `Failed to add address to whitelist, check error at Ethercan: https://etherscan.io/tx/${error.receipt.transactionHash}`,
+        status: `Failed to add address to whitelist, check error at Explorer: ${baseLink}/tx/${error.receipt.transactionHash}`,
       };
     }
   }
 
   async function requestAddToBlacklist(address: string) {
+    await getParams();
     setIsLoadingTransaction(true);
-
     try {
       const singleAddToBlacklist = await contract!.singleAddToBlacklist(
         address
@@ -217,7 +225,7 @@ export const useSmartContract = () => {
         render: () => (
           <Toast
             title={"Successfully added address to blacklist!"}
-            message={"Check out your transaction on Etherscan:"}
+            message={"Check out your transaction on Explorer:"}
             messageLink={`${baseLink}/tx/${txhash}`}
             isSuccess
           />
@@ -237,7 +245,7 @@ export const useSmartContract = () => {
           render: () => (
             <Toast
               title={"Failed to add to blacklist!"}
-              message={"😥 Something went wrong, check error at Etherscan!"}
+              message={"😥 Something went wrong, check error at Explorer!"}
               messageLink={
                 error.receipt
                   ? `${baseLink}/tx/${error.receipt.transactionHash}`
@@ -255,8 +263,8 @@ export const useSmartContract = () => {
   }
 
   async function requestRemoveFromWhitelist(address: string) {
+    await getParams();
     setIsLoadingTransaction(true);
-
     try {
       const singleRemoveFromWhitelist =
         await contract!.singleRemoveFromWhitelist(address);
@@ -273,7 +281,7 @@ export const useSmartContract = () => {
         render: () => (
           <Toast
             title={"Successfully removed address from whitelist!"}
-            message={"Check out your transaction on Etherscan:"}
+            message={"Check out your transaction on Explorer:"}
             messageLink={`${baseLink}/tx/${txhash}`}
             isSuccess
           />
@@ -293,7 +301,7 @@ export const useSmartContract = () => {
           render: () => (
             <Toast
               title={"Failed to remove address from whitelist!"}
-              message={"😥 Something went wrong, check error at Etherscan!"}
+              message={"😥 Something went wrong, check error at Explorer!"}
               messageLink={
                 error.receipt
                   ? `${baseLink}/tx/${error.receipt.transactionHash}`
@@ -311,8 +319,8 @@ export const useSmartContract = () => {
   }
 
   async function requestRemoveFromBlacklist(address: string) {
+    await getParams();
     setIsLoadingTransaction(true);
-
     try {
       const singleRemoveFromBlacklist =
         await contract!.singleRemoveFromBlacklist(address);
@@ -329,7 +337,7 @@ export const useSmartContract = () => {
         render: () => (
           <Toast
             title={"Successfully removed address from blacklist!"}
-            message={"Check out your transaction on Etherscan:"}
+            message={"Check out your transaction on Explorer:"}
             messageLink={`${baseLink}/tx/${txhash}`}
             isSuccess
           />
@@ -349,7 +357,7 @@ export const useSmartContract = () => {
           render: () => (
             <Toast
               title={"Failed to remove address from blacklist!"}
-              message={"😥 Something went wrong, check error at Etherscan!"}
+              message={"😥 Something went wrong, check error at Explorer!"}
               messageLink={
                 error.receipt
                   ? `${baseLink}/tx/${error.receipt.transactionHash}`
@@ -367,8 +375,8 @@ export const useSmartContract = () => {
   }
 
   async function withdraw() {
+    await getParams();
     setIsLoadingTransaction(true);
-
     try {
       const withdraw = await contract!.withdraw();
       await withdraw.wait().then((receipt: any) => {
@@ -384,7 +392,7 @@ export const useSmartContract = () => {
         render: () => (
           <Toast
             title={"Successfully withdrew from contract!"}
-            message={"Check out your transaction on Etherscan:"}
+            message={"Check out your transaction on Explorer:"}
             messageLink={`${baseLink}/tx/${txhash}`}
             isSuccess
           />
@@ -404,7 +412,7 @@ export const useSmartContract = () => {
           render: () => (
             <Toast
               title={"Failed to withdrawn!"}
-              message={"😥 Something went wrong, check error at Etherscan!"}
+              message={"😥 Something went wrong, check error at Explorer!"}
               messageLink={
                 error.receipt
                   ? `${baseLink}/tx/${error.receipt.transactionHash}`
@@ -423,8 +431,8 @@ export const useSmartContract = () => {
   }
 
   async function activatePublicSale(state: boolean) {
+    await getParams();
     setIsLoadingTransaction(true);
-
     try {
       const adminManageSaleState = await contract!.adminManageSaleState(state);
       await adminManageSaleState.wait().then((receipt: any) => {
@@ -440,7 +448,7 @@ export const useSmartContract = () => {
         render: () => (
           <Toast
             title={"Successfully managed public sale!"}
-            message={"Check out your transaction on Etherscan:"}
+            message={"Check out your transaction on Explorer:"}
             messageLink={`${baseLink}/tx/${txhash}`}
             isSuccess
           />
@@ -460,7 +468,7 @@ export const useSmartContract = () => {
           render: () => (
             <Toast
               title={"Failed to manage whitelist sale!"}
-              message={"😥 Something went wrong, check error at Etherscan!"}
+              message={"😥 Something went wrong, check error at Explorer!"}
               messageLink={
                 error.receipt
                   ? `${baseLink}/tx/${error.receipt.transactionHash}`
@@ -479,8 +487,8 @@ export const useSmartContract = () => {
   }
 
   async function activateWhitelist(state: boolean) {
+    await getParams();
     setIsLoadingTransaction(true);
-
     try {
       const adminManageWhitelistState =
         await contract!.adminManageWhitelistState(state);
@@ -498,7 +506,7 @@ export const useSmartContract = () => {
         render: () => (
           <Toast
             title={"Successfully managed whitelist!"}
-            message={"Check out your transaction on Etherscan:"}
+            message={"Check out your transaction on Explorer:"}
             messageLink={`${baseLink}/tx/${txhash}`}
             isSuccess
           />
@@ -518,7 +526,7 @@ export const useSmartContract = () => {
           render: () => (
             <Toast
               title={"Failed to manage whitelist state!"}
-              message={"😥 Something went wrong, check error at Etherscan!"}
+              message={"😥 Something went wrong, check error at Explorer!"}
               messageLink={
                 error.receipt
                   ? `${baseLink}/tx/${error.receipt.transactionHash}`
@@ -537,8 +545,8 @@ export const useSmartContract = () => {
   }
 
   async function changeOwnership(ownerAddress: string) {
+    await getParams();
     setIsLoadingTransaction(true);
-
     try {
       const transferOwnership = await contract!.transferOwnership(ownerAddress);
       await transferOwnership.wait().then((receipt: any) => {
@@ -554,7 +562,7 @@ export const useSmartContract = () => {
         render: () => (
           <Toast
             title={"Successfully changed owner!"}
-            message={"Check out your transaction on Etherscan:"}
+            message={"Check out your transaction on Explorer:"}
             messageLink={`${baseLink}/tx/${txhash}`}
             isSuccess
           />
@@ -574,7 +582,7 @@ export const useSmartContract = () => {
           render: () => (
             <Toast
               title={"Failed to change owner!"}
-              message={"😥 Something went wrong, check error at Etherscan!"}
+              message={"😥 Something went wrong, check error at Explorer!"}
               messageLink={
                 error.receipt
                   ? `${baseLink}/tx/${error.receipt.transactionHash}`
@@ -592,8 +600,8 @@ export const useSmartContract = () => {
   }
 
   async function setBaseUri(baseUri: string) {
+    await getParams();
     setIsLoadingTransaction(true);
-
     try {
       const setBaseURI = await contract!.setBaseURI(baseUri);
       await setBaseURI.wait().then((receipt: any) => {
@@ -609,7 +617,7 @@ export const useSmartContract = () => {
         render: () => (
           <Toast
             title={"Successfully changed base URI!"}
-            message={"Check out your transaction on Etherscan:"}
+            message={"Check out your transaction on Explorer:"}
             messageLink={`${baseLink}/tx/${txhash}`}
             isSuccess
           />
@@ -629,7 +637,7 @@ export const useSmartContract = () => {
           render: () => (
             <Toast
               title={"Failed to change base URI!"}
-              message={"😥 Something went wrong, check error at Etherscan!"}
+              message={"😥 Something went wrong, check error at Explorer!"}
               messageLink={
                 error.receipt
                   ? `${baseLink}/tx/${error.receipt.transactionHash}`
@@ -647,8 +655,8 @@ export const useSmartContract = () => {
   }
 
   async function manageNFTCost(newCost: string) {
+    await getParams();
     setIsLoadingTransaction(true);
-
     try {
       const setNFTCost = await contract!.setNFTCost(newCost);
       await setNFTCost.wait().then((receipt: any) => {
@@ -667,7 +675,7 @@ export const useSmartContract = () => {
         render: () => (
           <Toast
             title={"Successfully changed NFT Cost!"}
-            message={"Check out your transaction on Etherscan:"}
+            message={"Check out your transaction on Explorer:"}
             messageLink={`${baseLink}/tx/${txhash}`}
             isSuccess
           />
@@ -688,7 +696,7 @@ export const useSmartContract = () => {
           render: () => (
             <Toast
               title={"Failed to change NFT Cost!"}
-              message={"😥 Something went wrong, check error at Etherscan!"}
+              message={"😥 Something went wrong, check error at Explorer!"}
               messageLink={
                 error.receipt
                   ? `${baseLink}/tx/${error.receipt.transactionHash}`
@@ -706,8 +714,8 @@ export const useSmartContract = () => {
   }
 
   async function manageSupply(newSupply: string) {
+    await getParams();
     setIsLoadingTransaction(true);
-
     try {
       const adminIncreaseMaxSupply = await contract!.adminIncreaseMaxSupply(
         newSupply
@@ -727,7 +735,7 @@ export const useSmartContract = () => {
         render: () => (
           <Toast
             title={"Successfully changed supply!"}
-            message={"Check out your transaction on Etherscan:"}
+            message={"Check out your transaction on Explorer:"}
             messageLink={`${baseLink}/tx/${txhash}`}
             isSuccess
           />
@@ -747,7 +755,7 @@ export const useSmartContract = () => {
           render: () => (
             <Toast
               title={"Failed to manage supply!"}
-              message={"😥 Something went wrong, check error at Etherscan!"}
+              message={"😥 Something went wrong, check error at Explorer!"}
               messageLink={
                 error.receipt
                   ? `${baseLink}/tx/${error.receipt.transactionHash}`
