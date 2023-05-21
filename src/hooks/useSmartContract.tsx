@@ -49,14 +49,14 @@ export const useSmartContract = () => {
   async function getParams() {
     try {
       if (active && typeof globalThis.window?.ethereum != "undefined") {
-        // console.log({ active });
+        console.log({ active });
         provider = new ethers.providers.Web3Provider(
           globalThis.window?.ethereum as any
         );
-        // console.log({ provider });
+        console.log({ provider });
         const signer = provider.getSigner();
         contract = new ethers.Contract(contractAddress, cbai, signer);
-        // console.log({ contract });
+        console.log({ contract });
         const network = await provider.getNetwork();
         const chainId = network.chainId;
         const blockExplorerUrl = getBlockExplorerUrl(chainId);
@@ -759,9 +759,10 @@ export const useSmartContract = () => {
   }
 
   async function supplyValue(): Promise<string> {
-   const  custom = new ethers.providers.BaseProvider(provider.e);
-        const signer = custom.();
-      const  contract = new ethers.Contract(contractAddress, cbai, signer);
+    const custom = new ethers.providers.JsonRpcProvider(
+      process.env.SEPOLIA_RPC
+    );
+    const contract = new ethers.Contract(contractAddress, cbai, custom);
     try {
       const contractTotalSupply = await contract.getTotalSupply();
       const contractCurrentSupply = await contract.getCurrentSupply();
