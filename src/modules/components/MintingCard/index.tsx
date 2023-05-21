@@ -71,7 +71,7 @@ export function MintCard() {
             <Text>TOTAL MINTED: </Text>
             <Text pl={"0.5rem"} color={"#2F71C0"} fontWeight={"600"}>
               {metamask
-                ? `${currentSupplyValue} / ${totalSupplyValue}`
+                ? `${currentSupply} / ${totalSupply}`
                 : "0 / 0"}
             </Text>
           </Flex>
