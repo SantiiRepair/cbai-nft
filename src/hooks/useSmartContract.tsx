@@ -1,12 +1,9 @@
 import { useState } from "react";
 import { useToast } from "@chakra-ui/react";
 import { cbai } from "../contracts/parsedAbi/cbai";
-// import { useWallet } from "../providers/WalletProvider";
 import { Toast } from "../modules/components/Toast";
 import { ethers } from "ethers";
 import { useEthers } from "@usedapp/core";
-
-// const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 
 interface MintProps {
   amount: number;
@@ -18,9 +15,6 @@ export const useSmartContract = () => {
   const contractAddress = "0x2727206a77140749A950BD11Ab29EF207F249908";
   const toast = useToast();
   const { active, activateBrowserWallet } = useEthers();
-  // const { conn } = useWallet();
-  const [currentSupplyValue, setCurrentSupplyValue] = useState(null);
-  const [totalSupplyValue, setTotalSupplyValue] = useState(null);
   const [nftCost, setNftCost] = useState(0);
   const [isLoadingTransaction, setIsLoadingTransaction] = useState(false);
 
@@ -98,9 +92,6 @@ export const useSmartContract = () => {
         });
       }
 
-      const contractCurrentSupply = await contract!.getCurrentSupply();
-
-      setCurrentSupplyValue(contractCurrentSupply);
       setIsLoadingTransaction(false);
       toast({
         status: "success",
@@ -139,7 +130,6 @@ export const useSmartContract = () => {
             />
           ),
         });
-
         return {
           success: false,
           status: `😥 Something went wrong, check error at Explorer: ${baseLink}/tx/${error.receipt.transactionHash}`,
@@ -726,8 +716,6 @@ export const useSmartContract = () => {
       });
 
       setIsLoadingTransaction(false);
-      const contractTotalSupply = await contract!.getTotalSupply();
-      setTotalSupplyValue(contractTotalSupply);
       toast({
         status: "success",
         duration: 20000,
@@ -769,6 +757,28 @@ export const useSmartContract = () => {
         success: false,
         message: "An error occurred while changing supply: " + error.message,
       };
+    }
+  }
+
+  async function currentSupplyValue(): Promise<number> {
+    await getParams();
+    try {
+      const contractCurrentSupply = await contract!.getCurrentSupply();
+      return contractCurrentSupply;
+    } catch (error: any) {
+      console.error(error);
+      return 0;
+    }
+  }
+
+  async function totalSupplyValue(): Promise<number> {
+    await getParams();
+    try {
+      const contractTotalSupply = await contract!.getTotalSupply();
+      return contractTotalSupply;
+    } catch (error: any) {
+      console.error(error);
+      return 0;
     }
   }
 

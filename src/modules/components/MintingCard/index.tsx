@@ -1,14 +1,15 @@
 import { Flex, Image, Text, Heading } from "@chakra-ui/react";
 import { QuantityButton } from "./QuantityButton";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ButtonWallet } from "../ButtonWallet/ButtonWallet";
 import Link from "next/link";
 import { useSmartContract } from "../../../hooks/useSmartContract";
-import { useEthers } from "@usedapp/core";
 
 export function MintCard() {
   const [quantity, setQuantity] = useState(1);
-  const { active } = useEthers();
+  const [metamask, setMetamask] = useState(false);
+  const [totalSupply, setTotalSupply] = useState(0);
+  const [currentSupply, setCurrentSupply] = useState(0);
 
   const {
     requestMint,
@@ -17,22 +18,26 @@ export function MintCard() {
     isLoadingTransaction,
   } = useSmartContract();
 
-  function metamask() {
+  async function getUpdatedValues() {
     try {
-      if (
-        active &&
-        typeof globalThis.window?.ethereum != "undefined" &&
-        totalSupplyValue != null &&
-        currentSupplyValue != null
-      ) {
-        return true;
-      } else {
-        return false;
+      await totalSupplyValue().then((total: number) => setTotalSupply(total));
+      await currentSupplyValue().then((current: number) =>
+        setCurrentSupply(current)
+      );
+      if (totalSupply > 0 && currentSupply > 0) {
+        console.log({ totalSupply, currentSupply });
+        setMetamask(true);
       }
     } catch (error: any) {
       console.error(error);
     }
   }
+
+  useEffect(() => {
+    setInterval(async () => {
+      await getUpdatedValues();
+    }, 30000);
+  });
 
   return (
     <Flex w={"100%"} h={"100%"} align={"center"} justify={"center"}>
@@ -65,7 +70,7 @@ export function MintCard() {
           <Flex pt={"1rem"}>
             <Text>TOTAL MINTED: </Text>
             <Text pl={"0.5rem"} color={"#2F71C0"} fontWeight={"600"}>
-              {metamask()
+              {metamask
                 ? `${currentSupplyValue} / ${totalSupplyValue}`
                 : "0 / 0"}
             </Text>
