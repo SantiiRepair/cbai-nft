@@ -29,7 +29,7 @@ export function MintCard() {
   useEffect(() => {
     setInterval(() => {
       getUpdatedValues();
-    }, 30000);
+    }, 5000);
   });
 
   return (
