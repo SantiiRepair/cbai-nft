@@ -8,24 +8,17 @@ import { useSmartContract } from "../../../hooks/useSmartContract";
 export function MintCard() {
   const [quantity, setQuantity] = useState(1);
   const [metamask, setMetamask] = useState(false);
-  const [totalSupply, setTotalSupply] = useState(0);
-  const [currentSupply, setCurrentSupply] = useState(0);
+  const [supply, setSupply] = useState("");
 
-  const {
-    requestMint,
-    totalSupplyValue,
-    currentSupplyValue,
-    isLoadingTransaction,
-  } = useSmartContract();
+  const { requestMint, supplyValue, isLoadingTransaction } = useSmartContract();
 
   async function getUpdatedValues() {
     try {
-      await totalSupplyValue().then((total: number) => setTotalSupply(total));
-      await currentSupplyValue().then((current: number) =>
-        setCurrentSupply(current)
-      );
-      if (totalSupply > 0 && currentSupply > 0) {
-        console.log({ totalSupply, currentSupply });
+      await supplyValue().then((value: string) => {
+        setSupply(value);
+      });
+      if (supply) {
+        console.log({ supply });
         setMetamask(true);
       }
     } catch (error: any) {
@@ -34,8 +27,8 @@ export function MintCard() {
   }
 
   useEffect(() => {
-    setInterval(async () => {
-      await getUpdatedValues();
+    setInterval(() => {
+      getUpdatedValues();
     }, 30000);
   });
 
@@ -70,9 +63,7 @@ export function MintCard() {
           <Flex pt={"1rem"}>
             <Text>TOTAL MINTED: </Text>
             <Text pl={"0.5rem"} color={"#2F71C0"} fontWeight={"600"}>
-              {metamask
-                ? `${currentSupply} / ${totalSupply}`
-                : "0 / 0"}
+              {metamask ? supply : "0 / 0"}
             </Text>
           </Flex>
         </Flex>

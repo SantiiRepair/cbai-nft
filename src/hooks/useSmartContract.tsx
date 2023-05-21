@@ -48,21 +48,19 @@ export const useSmartContract = () => {
 
   async function getParams() {
     try {
-      if (active) {
-        if (typeof globalThis.window?.ethereum != "undefined") {
-          console.log({ active });
-          provider = new ethers.providers.Web3Provider(
-            globalThis.window?.ethereum as any
-          );
-          console.log({ provider });
-          const signer = provider.getSigner();
-          contract = new ethers.Contract(contractAddress, cbai, signer);
-          console.log({ contract });
-          const network = await provider.getNetwork();
-          const chainId = network.chainId;
-          const blockExplorerUrl = getBlockExplorerUrl(chainId);
-          baseLink = blockExplorerUrl;
-        }
+      if (active && typeof globalThis.window?.ethereum != "undefined") {
+        // console.log({ active });
+        provider = new ethers.providers.Web3Provider(
+          globalThis.window?.ethereum as any
+        );
+        // console.log({ provider });
+        const signer = provider.getSigner();
+        contract = new ethers.Contract(contractAddress, cbai, signer);
+        // console.log({ contract });
+        const network = await provider.getNetwork();
+        const chainId = network.chainId;
+        const blockExplorerUrl = getBlockExplorerUrl(chainId);
+        baseLink = blockExplorerUrl;
         return;
       } else {
         activateBrowserWallet();
@@ -760,33 +758,21 @@ export const useSmartContract = () => {
     }
   }
 
-  async function currentSupplyValue(): Promise<number> {
+  async function supplyValue(): Promise<string> {
     await getParams();
     try {
-      const contractCurrentSupply = await contract!.getCurrentSupply();
-      return contractCurrentSupply;
+      const contractTotalSupply = await contract.getTotalSupply();
+      const contractCurrentSupply = await contract.getCurrentSupply();
+      return `${contractCurrentSupply.toNumber()} / ${contractTotalSupply.toNumber()}`;
     } catch (error: any) {
-      console.error(error);
-      return 0;
-    }
-  }
-
-  async function totalSupplyValue(): Promise<number> {
-    await getParams();
-    try {
-      const contractTotalSupply = await contract!.getTotalSupply();
-      return contractTotalSupply;
-    } catch (error: any) {
-      console.error(error);
-      return 0;
+      throw new Error(error);
     }
   }
 
   return {
     requestMint,
     isLoadingTransaction,
-    totalSupplyValue,
-    currentSupplyValue,
+    supplyValue,
     requestAddToWhitelist,
     requestAddToBlacklist,
     requestRemoveFromWhitelist,
