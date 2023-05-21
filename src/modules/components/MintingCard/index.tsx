@@ -18,7 +18,6 @@ export function MintCard() {
         setSupply(value);
       });
       if (supply) {
-        console.log({ supply });
         setMetamask(true);
       }
     } catch (error: any) {

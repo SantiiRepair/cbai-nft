@@ -759,13 +759,12 @@ export const useSmartContract = () => {
   }
 
   async function supplyValue(): Promise<string> {
-    const custom = new ethers.providers.JsonRpcProvider(
-      process.env.SEPOLIA_RPC
-    );
-    const contract = new ethers.Contract(contractAddress, cbai, custom);
+    const rpc = "https://ethereum-sepolia.blockpi.network/v1/rpc/public";
+    const custom = new ethers.providers.JsonRpcProvider(rpc);
+    const cuz = new ethers.Contract(contractAddress, cbai, custom);
     try {
-      const contractTotalSupply = await contract.getTotalSupply();
-      const contractCurrentSupply = await contract.getCurrentSupply();
+      const contractTotalSupply = await cuz.getTotalSupply();
+      const contractCurrentSupply = await cuz.getCurrentSupply();
       return `${contractCurrentSupply.toNumber()} / ${contractTotalSupply.toNumber()}`;
     } catch (error: any) {
       throw new Error(error);
