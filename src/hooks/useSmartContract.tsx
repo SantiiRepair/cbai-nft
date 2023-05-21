@@ -759,7 +759,9 @@ export const useSmartContract = () => {
   }
 
   async function supplyValue(): Promise<string> {
-    await getParams();
+   const  custom = new ethers.providers.BaseProvider(provider.e);
+        const signer = custom.();
+      const  contract = new ethers.Contract(contractAddress, cbai, signer);
     try {
       const contractTotalSupply = await contract.getTotalSupply();
       const contractCurrentSupply = await contract.getCurrentSupply();
